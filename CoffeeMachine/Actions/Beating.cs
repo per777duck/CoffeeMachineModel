@@ -2,13 +2,20 @@
 
 namespace CoffeeMachine.Actions
 {
-    public class Beating(Milk ingr) : SomeAction(ingr)
+    public class Beating(Milk? ingr) : SomeAction(ingr)
     {
         public override string Name => "Взбить";
         public override void Execute()
         {
-            ingr.IsBeated = true;
-            Console.WriteLine($"{ingredient.Name} массой {ingredient.Weight} был взбит");
+            if (ingredient != null && ingr != null)
+            {
+                ingr.IsBeated = true;
+                Console.WriteLine($"Взбиваем \'{ingredient.Name}\' массой {ingredient.Weight}(г/мл)");
+            }
+            else
+            {
+                Console.WriteLine("Все молоко взбито до пенки!");
+            }
         }
     }
 }

@@ -2,12 +2,19 @@
 
 namespace CoffeeMachine.Actions
 {
-    public class Spilling(Ingredient ingr) : SomeAction(ingr)
+    public class Spilling(Ingredient? ingr) : SomeAction(ingr)
     {
         public override string Name => "Пролить";
         public override void Execute()
         {
-            Console.WriteLine($"{ingredient.Name} массой {ingredient.Weight} был пролит через кофе");
+            if (ingredient != null)
+            {
+                Console.WriteLine($"Проливаем \'{ingredient.Name}\' массой {ingredient.Weight}(г/мл)");
+            }
+            else
+            {
+                Console.WriteLine("Необходимо вскипятить воду и перемолоть зерно прежде чем делать пролив!(измените рецепт)");
+            }
         }
     }
 }
