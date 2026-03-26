@@ -1,6 +1,9 @@
-﻿using System;
+﻿using CoffeeMachine.SomeActions;
 
 namespace CoffeeMachine
 {
-    public interface IElement { }
+    public interface IElement 
+    {
+        SomeAction Owner { get; set; }
+    }
 }

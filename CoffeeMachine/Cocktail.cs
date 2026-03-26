@@ -1,5 +1,6 @@
-﻿using CoffeeMachine.Models;
-using CoffeeMachine.Actions;
+﻿using CoffeeMachine.Actions;
+using CoffeeMachine.Models;
+using CoffeeMachine.SomeActions;
 using System.Reflection.Metadata.Ecma335;
 
 namespace CoffeeMachine
@@ -9,6 +10,18 @@ namespace CoffeeMachine
         public string? Name { get; set; }
         public int Id { get; set; }
         public List<IElement> Recipe { get; set; } = new List<IElement>();
+
+        private void BreakAggregation(IElement element)
+        {
+            if (element is Ingredient ingr)
+            {
+                ingr.Owner = null;
+            }
+            else if (element is SomeAction action)
+            {
+                action.ClearOwnerReferences();
+            }
+        }
 
         private void AddIngredient()
         {
@@ -29,7 +42,7 @@ namespace CoffeeMachine
 
                 if (choice == "0") { return; }
 
-                Console.Write("Введите массу(г/мл): ");
+                Console.Write("Введите массу (г/мл): ");
 
                 if (!double.TryParse(Console.ReadLine().Trim(), out double weight) || weight < 0)
                 {
@@ -39,90 +52,68 @@ namespace CoffeeMachine
                     continue;
                 }
 
+                Ingredient? newIngredient = null;
+
                 switch (choice)
                 {
                     case "1":
-                        {
-                            Recipe.Add(new Water(weight));
-                            Console.WriteLine("Ингредиент успешно добавлен!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
-                            break;
-                        }
+                        newIngredient = new Water(weight);
+                        break;
                     case "2":
                         {
-                            Console.Write("Введите вкус сиропа(по умолчанию шоколадный): ");
+                            Console.Write("Введите вкус сиропа (по умолчанию шоколадный): ");
                             string taste = Console.ReadLine().Trim();
                             if (string.IsNullOrEmpty(taste))
                             {
                                 Console.WriteLine("Название вкуса не может быть пустым, будет установлено значение по умолчанию");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
                                 Console.ReadLine();
-
-                                Recipe.Add(new Syrup(weight));
-                                Console.WriteLine("Ингредиент успешно добавлен!");
-                                Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                                Console.ReadLine();
-                                break;
+                                newIngredient = new Syrup(weight);
                             }
-                            Recipe.Add(new Syrup(weight, taste));
-                            Console.WriteLine("Ингредиент успешно добавлен!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            else
+                            {
+                                newIngredient = new Syrup(weight, taste);
+                            }
+
                             break;
                         }
                     case "3":
                         {
-                            Console.Write("Введите тип кофе(по умолчанию арабика): ");
+                            Console.Write("Введите тип кофе (по умолчанию арабика): ");
                             string type = Console.ReadLine().Trim();
                             if (string.IsNullOrEmpty(type))
                             {
                                 Console.WriteLine("Название типа не может быть пустым, будет установлено значение по умолчанию");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
                                 Console.ReadLine();
-
-                                Recipe.Add(new CoffeeBean(weight));
-                                Console.WriteLine("Ингредиент успешно добавлен!");
-                                Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                                Console.ReadLine();
-                                break;
+                                newIngredient = new CoffeeBean(weight);
                             }
-                            Recipe.Add(new CoffeeBean(weight, type));
-                            Console.WriteLine("Ингредиент успешно добавлен!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            else
+                            {
+                                newIngredient = new CoffeeBean(weight, type);
+                            }
                             break;
                         }
                     case "4":
                         {
-                            Console.Write("Введите процент жирности(по умолчанию 2.5): ");
+                            Console.Write("Введите процент жирности (по умолчанию 2.5): ");
                             double fat = 2.5;
                             if (!double.TryParse(Console.ReadLine().Trim(), out fat) || fat < 0)
                             {
-                                Console.WriteLine("Жирность должно быть положительным числом, будет установлено значение по умолчанию");
+                                Console.WriteLine("Жирность должна быть положительным числом, будет установлено значение по умолчанию");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
                                 Console.ReadLine();
-
-                                Recipe.Add(new Milk(weight));
-                                Console.WriteLine("Ингредиент успешно добавлен!");
-                                Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                                Console.ReadLine();
-                                break;
+                                newIngredient = new Milk(weight);
                             }
-                            Recipe.Add(new Milk(weight, fat));
-                            Console.WriteLine("Ингредиент успешно добавлен!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            else
+                            {
+                                newIngredient = new Milk(weight, fat);
+                            }
                             break;
                         }
                     case "5":
-                        {
-                            Recipe.Add(new Ice(weight));
-                            Console.WriteLine("Ингредиент успешно добавлен!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
-                            break;
-                        }
+                        newIngredient = new Ice(weight);
+                        break;
                     default:
                         {
                             Console.WriteLine("Неверный ввод команды!");
@@ -130,6 +121,14 @@ namespace CoffeeMachine
                             Console.ReadLine();
                             break;
                         }
+                }
+
+                if (newIngredient != null)
+                {
+                    Recipe.Add(newIngredient);
+                    Console.WriteLine("Ингредиент успешно добавлен!");
+                    Console.WriteLine("Нажмите Enter чтобы продолжить...");
+                    Console.ReadLine();
                 }
             }
         }
@@ -154,13 +153,15 @@ namespace CoffeeMachine
 
                 if (choice == "0") { return; }
 
+                SomeAction? newAction = null;
+
                 switch (choice)
                 {
                     case "1":
                         {
                             while (true)
                             {
-                                Console.WriteLine("\nВыберите предмет, с которым будет производится действие");
+                                Console.WriteLine("\nВыберите предмет, с которым будет производиться действие:");
                                 int i = 1;
                                 foreach (var elem in Recipe)
                                 {
@@ -172,7 +173,7 @@ namespace CoffeeMachine
                                 Console.Write("Ваш выбор: ");
 
                                 if (!int.TryParse(Console.ReadLine().Trim(), out int ingr_choice) ||
-                                    ingr_choice < 0 || ingr_choice > i)
+                                    ingr_choice < 1 || ingr_choice > i - 1)
                                 {
                                     Console.WriteLine("Такого ингредиента нет!");
                                     Console.WriteLine("Нажмите Enter чтобы продолжить...");
@@ -189,13 +190,15 @@ namespace CoffeeMachine
                                         ingr_to_choose = ingr;
                                         break;
                                     }
-                                    else if (elem is Ingredient ingr2)
+                                    else if (elem is Ingredient)
                                     {
                                         find++;
                                     }
                                 }
 
-                                Recipe.Add(new Adding(ingr_to_choose));
+                                newAction = new Adding();
+                                newAction.AddElement(ingr_to_choose);
+
                                 Console.WriteLine("Действие успешно добавлено!");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
                                 Console.ReadLine();
@@ -205,59 +208,60 @@ namespace CoffeeMachine
                         }
                     case "2":
                         {
-                            Recipe.Add(new Mixing(new Water(0)));
-                            Console.WriteLine("Действие успешно добавлено!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            Ingredient? ingredientForMixing = null;
+                            foreach (var elem in Recipe)
+                            {
+                                if (elem is Ingredient ingr)
+                                {
+                                    ingredientForMixing = ingr;
+                                    break;
+                                }
+                            }
+                            newAction = new Mixing();
+                            newAction.AddElement(ingredientForMixing);
                             break;
                         }
                     case "3":
                         {
                             Water? water_to_boil = null;
-                            foreach(var elem in Recipe)
+                            foreach (var elem in Recipe)
                             {
-                                if (elem is Water wat && wat.Temprature != 100)
+                                if (elem is Water wat)
                                 {
                                     water_to_boil = wat;
                                     break;
                                 }
                             }
-                            Recipe.Add(new Boiling(water_to_boil));
-                            Console.WriteLine("Действие успешно добавлено!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            newAction = new Boiling();
+                            newAction.AddElement(water_to_boil);
                             break;
                         }
                     case "4":
                         {
                             Ingredient? bean_to_spill = null;
-                            foreach(var elem in Recipe)
+                            foreach (var elem in Recipe)
                             {
-                                if (elem is CoffeeBean bean && bean.IsGrinded)
+                                if (elem is CoffeeBean bean)
                                 {
                                     bean_to_spill = bean;
                                     break;
                                 }
-
                             }
 
-                            Water? ingr_to_spill = null;
+                            Water? water_to_spill = null;
                             if (bean_to_spill != null)
                             {
                                 foreach (var elem in Recipe)
                                 {
-                                    if (elem is Water wat && wat.Temprature == 100)
+                                    if (elem is Water wat)
                                     {
-                                        ingr_to_spill = wat;
+                                        water_to_spill = wat;
                                         break;
                                     }
-
                                 }
                             }
-                            Recipe.Add(new Spilling(ingr_to_spill));
-                            Console.WriteLine("Действие успешно добавлено!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            newAction = new Spilling();
+                            newAction.AddElement(water_to_spill);
                             break;
                         }
                     case "5":
@@ -265,17 +269,14 @@ namespace CoffeeMachine
                             CoffeeBean? coffee = null;
                             foreach (var elem in Recipe)
                             {
-                                if (elem is CoffeeBean bean && !bean.IsGrinded)
+                                if (elem is CoffeeBean bean)
                                 {
                                     coffee = bean;
                                     break;
                                 }
                             }
-
-                            Recipe.Add(new Grinding(coffee));
-                            Console.WriteLine("Действие успешно добавлено!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            newAction = new Grinding();
+                            newAction.AddElement(coffee);
                             break;
                         }
                     case "6":
@@ -283,17 +284,14 @@ namespace CoffeeMachine
                             Milk? milk = null;
                             foreach (var elem in Recipe)
                             {
-                                if (elem is Milk mi && !mi.IsBeated)
+                                if (elem is Milk mi)
                                 {
                                     milk = mi;
                                     break;
                                 }
                             }
-
-                            Recipe.Add(new Beating(milk));
-                            Console.WriteLine("Действие успешно добавлено!");
-                            Console.WriteLine("Нажмите Enter чтобы продолжить...");
-                            Console.ReadLine();
+                            newAction = new Beating();
+                            newAction.AddElement(milk);
                             break;
                         }
                     default:
@@ -304,16 +302,24 @@ namespace CoffeeMachine
                             break;
                         }
                 }
+
+                if (newAction != null)
+                {
+                    Recipe.Add(newAction);
+                    Console.WriteLine("Действие успешно добавлено!");
+                    Console.WriteLine("Нажмите Enter чтобы продолжить...");
+                    Console.ReadLine();
+                }
             }
         }
 
-        public void Create() 
+        public void Create()
         {
             while (true)
             {
                 Console.Clear();
                 Console.WriteLine("~ Создание нового напитка ~");
-                Console.Write("Дайте новое название, новому напитку: ");
+                Console.Write("Дайте новое название новому напитку: ");
 
                 string newName = Console.ReadLine().Trim();
 
@@ -343,23 +349,17 @@ namespace CoffeeMachine
 
                 string choice = Console.ReadLine().Trim();
 
-                switch(choice)
+                switch (choice)
                 {
                     case "1":
-                        {
-                            AddIngredient();
-                            break;
-                        }
+                        AddIngredient();
+                        break;
                     case "2":
-                        {
-                            AddAction();
-                            break;
-                        }
+                        AddAction();
+                        break;
                     case "0":
-                        {
-                            isAdding = false;
-                            break;
-                        }
+                        isAdding = false;
+                        break;
                     default:
                         {
                             Console.WriteLine("Неверная команда!");
@@ -369,10 +369,9 @@ namespace CoffeeMachine
                         }
                 }
             }
-
         }
 
-        public void Retrieve() 
+        public void Retrieve()
         {
             Console.Clear();
             Console.WriteLine($"~ Рецепт напитка: {Name} ~");
@@ -383,16 +382,25 @@ namespace CoffeeMachine
             {
                 if (element is Ingredient ingredient)
                 {
-                    Console.WriteLine($"{stepNumber}. ИНГРЕДИЕНТ: {ingredient.Name} - {ingredient.Weight} (г/мл)");
+                    string ownerInfo = ingredient.Owner != null ?
+                        $"[Используется в: {ingredient.Owner.Name}]" : "[Не используется]";
+                    Console.WriteLine($"{stepNumber}. ИНГРЕДИЕНТ: {ingredient.Name} - {ingredient.Weight} (г/мл) {ownerInfo}");
                 }
                 else if (element is SomeAction action)
                 {
-                    Console.WriteLine($"{stepNumber}. ДЕЙСТВИЕ: {action.Name}. ИНГРЕДИЕНТ: " +
-                        $"{(action.ingredient != null ? action.ingredient.Name : "не выбран")}");
+                    var ingredientsInAction = action.Elements
+                        .OfType<Ingredient>()
+                        .ToList();
+
+                    string ingredientsList = ingredientsInAction.Any()
+                        ? string.Join(", ", ingredientsInAction.Select(i => i.Name))
+                        : "не выбран";
+
+                    Console.WriteLine($"{stepNumber}. ДЕЙСТВИЕ: {action.Name}. ИНГРЕДИЕНТ: {ingredientsList}");
                 }
                 stepNumber++;
             }
-            Console.WriteLine("Нажмите Enter чтобы продолжить...");
+            Console.WriteLine("\nНажмите Enter чтобы продолжить...");
             Console.ReadLine();
         }
 
@@ -432,20 +440,20 @@ namespace CoffeeMachine
                             Console.ReadLine();
                             break;
                         }
-                            break;
+                        break;
                     }
 
                 case "2":
-                    { 
+                    {
                         while (true)
                         {
-                            Console.WriteLine("Добавить: ");
+                            Console.WriteLine("Добавить:");
                             Console.WriteLine("1. Ингредиент");
                             Console.WriteLine("2. Действие");
                             Console.WriteLine("0. Отмена");
 
                             if (!int.TryParse(Console.ReadLine().Trim(), out int addChoice) ||
-                                addChoice < 1 || addChoice > 2)
+                                addChoice < 0 || addChoice > 2)
                             {
                                 Console.WriteLine("Неверная команда!");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
@@ -470,7 +478,7 @@ namespace CoffeeMachine
                             Console.Write("Введите номер элемента для удаления или 0 чтобы отменить: ");
 
                             if (!int.TryParse(Console.ReadLine().Trim(), out int removeIndex) ||
-                                removeIndex < 1 || removeIndex > Recipe.Count)
+                                removeIndex < 0 || removeIndex > Recipe.Count)
                             {
                                 Console.WriteLine("Такого элемента не существует!");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
@@ -479,6 +487,9 @@ namespace CoffeeMachine
                             }
 
                             if (removeIndex == 0) { return; }
+
+                            var elementToRemove = Recipe[removeIndex - 1];
+                            BreakAggregation(elementToRemove);
 
                             Recipe.RemoveAt(removeIndex - 1);
                             Console.WriteLine("Элемент удален!");
@@ -496,7 +507,7 @@ namespace CoffeeMachine
                             Retrieve();
                             Console.Write("Введите номер элемента для изменения или 0 чтобы отменить: ");
                             if (!int.TryParse(Console.ReadLine().Trim(), out int editIndex) ||
-                                editIndex < 1 || editIndex > Recipe.Count)
+                                editIndex < 0 || editIndex > Recipe.Count)
                             {
                                 Console.WriteLine("Такого элемента не существует!");
                                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
@@ -506,14 +517,17 @@ namespace CoffeeMachine
 
                             if (editIndex == 0) { return; }
 
-                            Recipe.RemoveAt(editIndex);
+                            var oldElement = Recipe[editIndex - 1];
+                            BreakAggregation(oldElement);
+                            Recipe.RemoveAt(editIndex - 1);
+
                             while (true)
                             {
                                 Console.WriteLine("Добавьте новый элемент:");
                                 Console.WriteLine("1. Ингредиент");
                                 Console.WriteLine("2. Действие");
                                 if (!int.TryParse(Console.ReadLine().Trim(), out int newChoice) ||
-                                newChoice < 1 || newChoice > 2)
+                                    newChoice < 1 || newChoice > 2)
                                 {
                                     Console.WriteLine("Неверная команда!");
                                     Console.WriteLine("Нажмите Enter чтобы продолжить...");
@@ -533,7 +547,7 @@ namespace CoffeeMachine
             }
         }
 
-        public void Delete() 
+        public void Delete()
         {
             Console.Clear();
             Console.WriteLine($"~ Удаление рецепта напитка: {Name} ~");
@@ -542,6 +556,11 @@ namespace CoffeeMachine
 
             if (choice.ToLower() == "да")
             {
+                foreach (var element in Recipe)
+                {
+                    BreakAggregation(element);
+                }
+
                 Recipe.Clear();
                 Name = null;
                 Console.WriteLine("Напиток успешно удален!");
@@ -554,7 +573,7 @@ namespace CoffeeMachine
                 Console.WriteLine("Нажмите Enter чтобы продолжить...");
                 Console.ReadLine();
             }
-        } 
+        }
 
         public void Prepare()
         {
@@ -576,11 +595,11 @@ namespace CoffeeMachine
 
                 if (element is Ingredient ingredient)
                 {
-                    Console.WriteLine($"  Берем \'{ingredient.Name}\' ({ingredient.Weight}г/мл)");
+                    Console.WriteLine($"  Берем '{ingredient.Name}' ({ingredient.Weight}г/мл)");
                 }
                 else if (element is SomeAction action)
                 {
-                    Console.Write("  ");
+                    Console.Write("   ");
                     action.Execute();
                 }
 
